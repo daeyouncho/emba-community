@@ -11,8 +11,6 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const bull_1 = require("@nestjs/bull");
-const serve_static_1 = require("@nestjs/serve-static");
-const path_1 = require("path");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const meetings_module_1 = require("./meetings/meetings.module");
@@ -27,17 +25,12 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
-            serve_static_1.ServeStaticModule.forRoot({
-                rootPath: (0, path_1.join)(__dirname, '..', 'public'),
-                exclude: ['/api/(.*)'],
-            }),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 useFactory: (config) => {
-                    const databaseUrl = config.get('DATABASE_URL');
-                    if (databaseUrl) {
-                        return { type: 'postgres', url: databaseUrl, autoLoadEntities: true, synchronize: true, ssl: { rejectUnauthorized: false } };
-                    }
+                    const url = config.get('DATABASE_URL');
+                    if (url)
+                        return { type: 'postgres', url, autoLoadEntities: true, synchronize: true, ssl: { rejectUnauthorized: false } };
                     return { type: 'postgres', host: config.get('DB_HOST', 'localhost'), port: config.get('DB_PORT', 5432), username: config.get('DB_USERNAME', 'postgres'), password: config.get('DB_PASSWORD', 'postgres'), database: config.get('DB_DATABASE', 'emba_community'), autoLoadEntities: true, synchronize: true };
                 },
                 inject: [config_1.ConfigService],
@@ -45,9 +38,9 @@ exports.AppModule = AppModule = __decorate([
             bull_1.BullModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 useFactory: (config) => {
-                    const redisUrl = config.get('REDIS_URL');
-                    if (redisUrl)
-                        return { url: redisUrl };
+                    const url = config.get('REDIS_URL');
+                    if (url)
+                        return { url };
                     return { redis: { host: config.get('REDIS_HOST', 'localhost'), port: config.get('REDIS_PORT', 6379) } };
                 },
                 inject: [config_1.ConfigService],

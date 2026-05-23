@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -15,34 +13,24 @@ import { CalendarModule } from './calendar/calendar.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
-      exclude: ['/api/(.*)'],
-    }),
-
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
-        const databaseUrl = config.get<string>('DATABASE_URL');
-        if (databaseUrl) {
-          return { type: 'postgres' as 'postgres', url: databaseUrl, autoLoadEntities: true, synchronize: true, ssl: { rejectUnauthorized: false } };
-        }
+        const url = config.get<string>('DATABASE_URL');
+        if (url) return { type: 'postgres' as 'postgres', url, autoLoadEntities: true, synchronize: true, ssl: { rejectUnauthorized: false } };
         return { type: 'postgres' as 'postgres', host: config.get('DB_HOST','localhost'), port: config.get<number>('DB_PORT',5432), username: config.get('DB_USERNAME','postgres'), password: config.get('DB_PASSWORD','postgres'), database: config.get('DB_DATABASE','emba_community'), autoLoadEntities: true, synchronize: true };
       },
       inject: [ConfigService],
     }),
-
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
-        const redisUrl = config.get<string>('REDIS_URL');
-        if (redisUrl) return { url: redisUrl };
+        const url = config.get<string>('REDIS_URL');
+        if (url) return { url };
         return { redis: { host: config.get('REDIS_HOST','localhost'), port: config.get<number>('REDIS_PORT',6379) } };
       },
       inject: [ConfigService],
     }),
-
     AuthModule, UsersModule, MeetingsModule, VotesModule,
     FlashMeetingsModule, NotificationsModule, CalendarModule,
   ],
