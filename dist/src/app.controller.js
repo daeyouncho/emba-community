@@ -17,13 +17,13 @@ const common_1 = require("@nestjs/common");
 const path_1 = require("path");
 let AppController = class AppController {
     serveApp(res) {
-        res.sendFile((0, path_1.join)(__dirname, '..', 'public', 'index.html'));
+        res.sendFile((0, path_1.join)(__dirname, '..', 'public', 'index.html'), { root: '/' });
     }
 };
 exports.AppController = AppController;
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Res)()),
+    __param(0, (0, common_1.Res)({ passthrough: false })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
