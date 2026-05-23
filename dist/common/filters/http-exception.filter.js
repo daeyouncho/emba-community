@@ -17,6 +17,10 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
         const request = ctx.getRequest();
+        // 이미 응답이 완료된 경우 무시 (HTML 직접 서빙 후 발생하는 에러)
+        if (response.headersSent) {
+            return;
+        }
         const status = exception instanceof common_1.HttpException
             ? exception.getStatus()
             : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -37,4 +41,3 @@ exports.HttpExceptionFilter = HttpExceptionFilter;
 exports.HttpExceptionFilter = HttpExceptionFilter = HttpExceptionFilter_1 = __decorate([
     (0, common_1.Catch)()
 ], HttpExceptionFilter);
-//# sourceMappingURL=http-exception.filter.js.map
