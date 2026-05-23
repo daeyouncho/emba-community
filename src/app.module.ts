@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -17,11 +16,11 @@ import { CalendarModule } from './calendar/calendar.module';
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService): TypeOrmModuleOptions => {
+      useFactory: (config: ConfigService) => {
         const databaseUrl = config.get<string>('DATABASE_URL');
         if (databaseUrl) {
           return {
-            type: 'postgres',
+            type: 'postgres' as 'postgres',
             url: databaseUrl,
             autoLoadEntities: true,
             synchronize: true,
@@ -29,7 +28,7 @@ import { CalendarModule } from './calendar/calendar.module';
           };
         }
         return {
-          type: 'postgres',
+          type: 'postgres' as 'postgres',
           host: config.get('DB_HOST', 'localhost'),
           port: config.get<number>('DB_PORT', 5432),
           username: config.get('DB_USERNAME', 'postgres'),
@@ -53,7 +52,6 @@ import { CalendarModule } from './calendar/calendar.module';
           redis: {
             host: config.get('REDIS_HOST', 'localhost'),
             port: config.get<number>('REDIS_PORT', 6379),
-            password: config.get('REDIS_PASSWORD') || undefined,
           },
         };
       },
