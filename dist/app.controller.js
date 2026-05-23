@@ -14,10 +14,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
+const fs = require("fs");
 const path_1 = require("path");
 let AppController = class AppController {
     serveApp(res) {
-        res.sendFile(path_1.join(__dirname, '..', 'public', 'index.html'));
+        const htmlPath = path_1.join(__dirname, '..', 'public', 'index.html');
+        const html = fs.readFileSync(htmlPath, 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.end(html);
     }
 };
 exports.AppController = AppController;
@@ -31,4 +35,3 @@ __decorate([
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)()
 ], AppController);
-//# sourceMappingURL=app.controller.js.map
