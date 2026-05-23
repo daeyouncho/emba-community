@@ -11,22 +11,23 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
+
+  // static 먼저 등록 (글로벌 prefix 적용 전)
+  app.use(express.static(join(__dirname, '..', 'public')));
+
   app.setGlobalPrefix('api/v1');
   app.enableCors({ origin: '*', methods: 'GET,POST,PATCH,PUT,DELETE,OPTIONS', allowedHeaders: 'Content-Type,Authorization' });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useWebSocketAdapter(new IoAdapter(app));
-  
-  // 정적 파일 서빙 (/public → /)
-  app.useStaticAssets(join(__dirname, '..', 'public'));
-  
+
   const port = parseInt(process.env.PORT || '3000', 10);
   await app.listen(port, '0.0.0.0');
-  console.log(`✅ EMBA 서버 + 웹앱 실행 중 → http://0.0.0.0:${port}`);
+  console.log(`✅ EMBA 서버+웹앱 → http://0.0.0.0:${port}`);
 }
 bootstrap();
