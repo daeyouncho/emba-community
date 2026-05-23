@@ -11,11 +11,19 @@ const common_1 = require("@nestjs/common");
 const operators_1 = require("rxjs/operators");
 let TransformInterceptor = class TransformInterceptor {
     intercept(context, next) {
-        return next.handle().pipe((0, operators_1.map)((data) => ({
-            success: true,
-            data,
-            timestamp: new Date().toISOString(),
-        })));
+        const response = context.switchToHttp().getResponse();
+        // 이미 응답이 완료된 경우(HTML 직접 서빙 등) 인터셉터 건너뜀
+        if (response.headersSent) {
+            return next.handle();
+        }
+        return next.handle().pipe((0, operators_1.map)((data) => {
+            if (data === undefined || data === null) return data;
+            return {
+                success: true,
+                data,
+                timestamp: new Date().toISOString(),
+            };
+        }));
     }
 };
 exports.TransformInterceptor = TransformInterceptor;
