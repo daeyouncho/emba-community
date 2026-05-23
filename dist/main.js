@@ -14,7 +14,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const express_1 = require('express');
     const path_1 = require('path');
-    app.use(express_1.default.static(path_1.join(__dirname, '..', 'public')));
+    app.use(express_1.static(path_1.join(__dirname, '..', 'public')));
     app.setGlobalPrefix('api/v1');
     app.enableCors({
         origin: '*',
