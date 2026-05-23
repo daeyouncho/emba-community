@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -34,5 +35,6 @@ import { CalendarModule } from './calendar/calendar.module';
     AuthModule, UsersModule, MeetingsModule, VotesModule,
     FlashMeetingsModule, NotificationsModule, CalendarModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

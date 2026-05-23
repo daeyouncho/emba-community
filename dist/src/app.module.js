@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const bull_1 = require("@nestjs/bull");
+const app_controller_1 = require("./app.controller");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const meetings_module_1 = require("./meetings/meetings.module");
@@ -48,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule, users_module_1.UsersModule, meetings_module_1.MeetingsModule, votes_module_1.VotesModule,
             flash_meetings_module_1.FlashMeetingsModule, notifications_module_1.NotificationsModule, calendar_module_1.CalendarModule,
         ],
+        controllers: [app_controller_1.AppController],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
