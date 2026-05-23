@@ -14,22 +14,22 @@ import { CalendarModule } from './calendar/calendar.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // PostgreSQL - Railway는 DATABASE_URL을 자동 주입
+    // PostgreSQL - DATABASE_URL 우선, 없으면 개별 변수
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
-        const databaseUrl = config.get('DATABASE_URL');
+        const databaseUrl = config.get<string>('DATABASE_URL');
         if (databaseUrl) {
           return {
-            type: 'postgres',
+            type: 'postgres' as const,
             url: databaseUrl,
             autoLoadEntities: true,
             synchronize: true,
-            ssl: { rejectUnauthorized: false }, // Railway PostgreSQL SSL
+            ssl: { rejectUnauthorized: false },
           };
         }
         return {
-          type: 'postgres',
+          type: 'postgres' as const,
           host: config.get('DB_HOST', 'localhost'),
           port: config.get<number>('DB_PORT', 5432),
           username: config.get('DB_USERNAME', 'postgres'),
@@ -42,13 +42,16 @@ import { CalendarModule } from './calendar/calendar.module';
       inject: [ConfigService],
     }),
 
-    // Redis - Railway는 REDIS_URL을 자동 주입
+    // Redis - REDIS_URL 우선
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
-        const redisUrl = config.get('REDIS_URL');
+        const redisUrl = config.get<string>('REDIS_URL');
         if (redisUrl) {
-          return { url: redisUrl, redis: { tls: {} } };
+          return {
+            url: redisUrl,
+            redis: { tls: { rejectUnauthorized: false } },
+          };
         }
         return {
           redis: {
