@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MeetingsModule } from './meetings/meetings.module';
@@ -14,14 +15,13 @@ import { CalendarModule } from './calendar/calendar.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // PostgreSQL - DATABASE_URL 우선, 없으면 개별 변수
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => {
+      useFactory: (config: ConfigService): TypeOrmModuleOptions => {
         const databaseUrl = config.get<string>('DATABASE_URL');
         if (databaseUrl) {
           return {
-            type: 'postgres' as const,
+            type: 'postgres',
             url: databaseUrl,
             autoLoadEntities: true,
             synchronize: true,
@@ -29,7 +29,7 @@ import { CalendarModule } from './calendar/calendar.module';
           };
         }
         return {
-          type: 'postgres' as const,
+          type: 'postgres',
           host: config.get('DB_HOST', 'localhost'),
           port: config.get<number>('DB_PORT', 5432),
           username: config.get('DB_USERNAME', 'postgres'),
@@ -42,16 +42,12 @@ import { CalendarModule } from './calendar/calendar.module';
       inject: [ConfigService],
     }),
 
-    // Redis - REDIS_URL 우선
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
         const redisUrl = config.get<string>('REDIS_URL');
         if (redisUrl) {
-          return {
-            url: redisUrl,
-            redis: { tls: { rejectUnauthorized: false } },
-          };
+          return { url: redisUrl };
         }
         return {
           redis: {
