@@ -13,10 +13,12 @@ const transform_interceptor_1 = require("./common/interceptors/transform.interce
 const fs = require("fs");
 const path_1 = require("path");
 
+const HTML_PATH = path_1.join(__dirname, '..', 'public', 'index.html');
+
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     
-    // NestJS 설정
+    // NestJS 앱 설정
     app.setGlobalPrefix('api/v1', { exclude: [{ path: '/', method: common_1.RequestMethod.GET }] });
     app.enableCors({ origin: '*', methods: 'GET,POST,PATCH,PUT,DELETE,OPTIONS', allowedHeaders: 'Content-Type,Authorization' });
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
@@ -24,15 +26,22 @@ async function bootstrap() {
     app.useGlobalInterceptors(new transform_interceptor_1.TransformInterceptor());
     app.useWebSocketAdapter(new socket_io_1.IoAdapter(app));
     
-    // Express 앱에 직접 / 라우트 등록 (NestJS 라우터보다 먼저 실행됨)
-    const httpAdapter = app.getHttpAdapter();
-    const expressApp = httpAdapter.getInstance();
-    const htmlPath = path_1.join(__dirname, '..', 'public', 'index.html');
+    // NestJS init 완료 후 express 앱에 미들웨어 등록
+    await app.init();
+    const expressApp = app.getHttpAdapter().getInstance();
     
-    expressApp.get('/', (req, res) => {
-        const html = fs.readFileSync(htmlPath, 'utf8');
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.end(html);
+    // 기존 라우터 스택 맨 앞에 / 처리기 삽입
+    expressApp.use((req, res, next) => {
+        if (req.method === 'GET' && (req.url === '/' || req.url === '')) {
+            try {
+                const html = fs.readFileSync(HTML_PATH, 'utf8');
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return res.end(html);
+            } catch(e) {
+                return next(e);
+            }
+        }
+        next();
     });
     
     const port = parseInt(process.env.PORT || '3000', 10);
