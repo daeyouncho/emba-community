@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>EMBA 동기 모임</title>
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f2ee;color:#0f2041;min-height:100vh}
+.topbar{background:#0f2041;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-logo{width:30px;height:30px;border-radius:50%;background:#c8a84b;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#0f2041}
+.brand-name{color:#fff;font-size:15px;font-weight:600}
+.user-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);border-radius:20px;padding:5px 12px 5px 5px;cursor:pointer}
+.user-av{width:22px;height:22px;border-radius:50%;background:#c8a84b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0f2041}
+.user-nm{color:#fff;font-size:12px;font-weight:500}
+.nav{background:#fff;border-bottom:1px solid #e5e5e5;display:flex;overflow-x:auto;padding:0 4px;position:sticky;top:52px;z-index:90}
+.nav::-webkit-scrollbar{display:none}
+.ntab{padding:12px 14px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.ntab i{font-size:14px}
+.ntab.on{color:#0f2041;border-bottom-color:#0f2041;font-weight:700}
+.main{padding:16px;max-width:600px;margin:0 auto}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sec-ttl{font-size:16px;font-weight:700}
+.cnt{font-size:11px;color:#999;background:#f0f0f0;padding:2px 9px;border-radius:20px;margin-left:6px;font-weight:600}
+.btn-add{background:#0f2041;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-add i{font-size:13px}
+.cards{display:grid;gap:10px}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden}
+.card:hover{border-color:#c5c5c5}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.card.t-professor::before{background:#c8a84b}
+.card.t-birth_year::before{background:#7c5cbf}
+.card.t-flash::before{background:#e05c2a}
+.card.t-general::before{background:#378ADD}
+.card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.card-ttl{font-size:14px;font-weight:700;flex:1;line-height:1.4}
+.badges{display:flex;gap:5px;flex-wrap:wrap}
+.bdg{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px}
+.bdg.professor{background:#fdf6e3;color:#92600a}
+.bdg.birth_year{background:#f0ebff;color:#5a3b9c}
+.bdg.flash{background:#fff0eb;color:#b84a1e}
+.bdg.general{background:#e8edf7;color:#1a3360}
+.bdg.voting{background:#dbeafe;color:#1e40af}
+.bdg.confirmed{background:#d1fae5;color:#065f46}
+.bdg.draft{background:#f3f4f6;color:#6b7280}
+.card-desc{font-size:12px;color:#666;margin-bottom:8px;line-height:1.5}
+.card-meta{display:flex;gap:12px;flex-wrap:wrap}
+.mi{display:flex;align-items:center;gap:3px;font-size:11px;color:#999}
+.mi i{font-size:12px}
+.login-wrap{min-height:calc(100vh - 52px);display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.lcard{background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:32px 24px;width:100%;max-width:400px}
+.l-logo{width:52px;height:52px;border-radius:50%;background:#0f2041;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#c8a84b;margin:0 auto 14px}
+.l-ttl{text-align:center;font-size:20px;font-weight:800;margin-bottom:3px}
+.l-sub{text-align:center;font-size:13px;color:#999;margin-bottom:24px}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:6px;letter-spacing:0.4px;text-transform:uppercase}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 14px;font-size:14px;outline:none;background:#fafaf9}
+.fld input:focus,.fld select:focus{border-color:#0f2041}
+.fld textarea{resize:vertical;min-height:70px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lbtn{width:100%;height:44px;background:#0f2041;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.ltog{text-align:center;margin-top:14px;font-size:13px;color:#999}
+.ltog a{color:#0f2041;font-weight:600;cursor:pointer}
+.err{background:#fee2e2;color:#991b1b;font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.hint-box{margin-top:14px;padding:12px 14px;background:#f9f9f7;border-radius:8px;border:1px solid #eee}
+.hint-ttl{font-size:10px;font-weight:700;color:#999;margin-bottom:6px;text-transform:uppercase}
+.hint-row{font-size:12px;color:#666;line-height:2}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-ttl{font-size:18px;font-weight:700}
+.modal-cls{background:none;border:none;cursor:pointer;color:#999;font-size:22px;line-height:1}
+.det-bar{height:4px;border-radius:4px;margin-bottom:16px}
+.det-ttl{font-size:20px;font-weight:800;margin-bottom:6px}
+.det-desc{font-size:13px;color:#666;line-height:1.6;margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{display:flex;align-items:center;gap:5px;background:#f5f5f3;border:1px solid #eee;padding:6px 12px;border-radius:20px;font-size:12px;color:#555}
+.chip i{font-size:13px}
+.vote-box{background:#f9f8f6;border-radius:12px;padding:16px;margin-bottom:14px}
+.vote-box-ttl{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.vote-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.vbtn{height:40px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;color:#666}
+.vbtn.agree{border-color:#065f46;color:#065f46}
+.vbtn.agree:hover,.vbtn.agree.sel{background:#d1fae5}
+.vbtn.disagree{border-color:#991b1b;color:#991b1b}
+.vbtn.disagree:hover,.vbtn.disagree.sel{background:#fee2e2}
+.vbtn.abstain:hover,.vbtn.abstain.sel{background:#f3f4f6}
+.big-bar{background:#eee;border-radius:8px;height:10px;overflow:hidden;margin-bottom:8px}
+.big-bar-fill{height:100%;border-radius:8px;background:#c8a84b;transition:width 0.6s}
+.vote-stat{display:flex;justify-content:space-between;font-size:12px;color:#999}
+.confirm-ok{background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.confirm-ok i{color:#065f46;font-size:20px}
+.confirm-ok span{font-size:13px;color:#065f46;font-weight:600}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;height:44px;background:none;border:1px solid #ddd;border-radius:8px;font-size:14px;cursor:pointer;color:#666}
+.btn-submit{flex:2;height:44px;background:#0f2041;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.btn-submit:disabled{opacity:0.5}
+.ul{display:grid;gap:10px}
+.uc{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.uav{width:40px;height:40px;border-radius:50%;background:#0f2041;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#c8a84b;flex-shrink:0}
+.uinf{flex:1;min-width:0}
+.unm{font-size:14px;font-weight:700}
+.usub{font-size:12px;color:#999;margin-top:2px}
+.yr-bdg{background:#f0ebff;color:#5a3b9c;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.spin{width:24px;height:24px;border:2px solid #eee;border-top-color:#0f2041;border-radius:50%;animation:sp 0.6s linear infinite;margin:48px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:56px 20px;color:#bbb}
+.empty i{font-size:40px;display:block;margin-bottom:12px}
+.empty p{font-size:14px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f2041;color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:500;z-index:1000;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.flash-exp{display:flex;align-items:center;gap:4px;font-size:11px;color:#b84a1e;font-weight:600;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">E</div>
+    <div class="brand-name">EMBA 동기 모임</div>
+  </div>
+  <div id="user-chip" style="display:none" class="user-chip" onclick="logoutConfirm()">
+    <div class="user-av" id="uav"></div>
+    <div class="user-nm" id="unm"></div>
+  </div>
+</div>
+<div id="screen"></div>
+<div id="modal-backdrop" class="modal-backdrop" style="display:none">
+  <div class="modal" id="modal-inner"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API='https://emba-community-production.up.railway.app/api/v1';
+let token=null,me=null,tab='all',flashList=[];
+const $=id=>document.getElementById(id);
+function toast(msg,ms=2500){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
+function showModal(html){$('modal-inner').innerHTML=html;$('modal-backdrop').style.display='flex';}
+function closeModal(){$('modal-backdrop').style.display='none';}
+$('modal-backdrop').addEventListener('click',e=>{if(e.target===$('modal-backdrop'))closeModal();});
+async function api(path,opts={}){
+  const h={'Content-Type':'application/json'};
+  if(token)h['Authorization']='Bearer '+token;
+  const r=await fetch(API+path,{...opts,headers:h});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.message?.message||d.message||'오류');
+  return d.data;
+}
+function typeName(t){return{professor:'교수님',birth_year:'년생',flash:'번개',general:'일반'}[t]||t;}
+function statusName(s){return{draft:'준비중',voting:'투표중',confirmed:'확정',cancelled:'취소'}[s]||s;}
+function typeColor(t){return{professor:'#c8a84b',birth_year:'#7c5cbf',flash:'#e05c2a',general:'#378ADD'}[t]||'#888';}
+function fmtDate(d){if(!d)return'';return new Date(d).toLocaleDateString('ko-KR',{month:'short',day:'numeric'});}
+function fmtDiff(d){const m=Math.max(0,Math.round((new Date(d)-Date.now())/60000));return m>60?Math.round(m/60)+'시간 후':m>0?m+'분 후':'곧 종료';}
+function renderLogin(){
+  $('user-chip').style.display='none';
+  $('screen').innerHTML=`<div class="login-wrap"><div class="lcard">
+    <div class="l-logo">E</div><div class="l-ttl">EMBA 동기 모임</div><div class="l-sub">서울대학교 EMBA · 18기</div>
+    <div class="err" id="lerr"></div>
+    <div class="fld"><label>이메일</label><input type="email" id="lemail" value="admin@emba.com"></div>
+    <div class="fld"><label>비밀번호</label><input type="password" id="lpw" value="123456"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()">로그인</button>
+    <div class="ltog">계정이 없으신가요? <a onclick="renderRegister()">회원가입</a></div>
+    <div class="hint-box"><div class="hint-ttl">테스트 계정</div>
+    <div class="hint-row">admin@emba.com / 123456<br>kim@emba.com / 123456</div></div>
+  </div></div>`;
+  $('lemail').onkeydown=e=>e.key==='Enter'&&doLogin();
+  $('lpw').onkeydown=e=>e.key==='Enter'&&doLogin();
+}
+async function doLogin(){
+  const btn=$('lbtn'),err=$('lerr');btn.textContent='로그인 중...';btn.disabled=true;err.style.display='none';
+  try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify({email:$('lemail').value,password:$('lpw').value})});token=d.accessToken;me=d.user;afterLogin();}
+  catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.textContent='로그인';btn.disabled=false;
+}
+function renderRegister(){
+  $('screen').innerHTML=`<div class="login-wrap"><div class="lcard">
+    <div class="l-logo">E</div><div class="l-ttl">회원가입</div><div class="l-sub">EMBA 동기 커뮤니티</div>
+    <div class="err" id="rerr"></div>
+    <div class="fld"><label>이름</label><input type="text" id="rname" placeholder="실명"></div>
+    <div class="fld"><label>이메일</label><input type="email" id="remail"></div>
+    <div class="fld"><label>비밀번호</label><input type="password" id="rpw" placeholder="6자 이상"></div>
+    <div class="r2"><div class="fld"><label>년생</label><input type="number" id="ryear" placeholder="1985"></div>
+    <div class="fld"><label>회사</label><input type="text" id="rcomp"></div></div>
+    <button class="lbtn" id="rbtn" onclick="doRegister()">가입하기</button>
+    <div class="ltog"><a onclick="renderLogin()">로그인으로</a></div>
+  </div></div>`;
+}
+async function doRegister(){
+  const btn=$('rbtn'),err=$('rerr');btn.textContent='가입 중...';btn.disabled=true;err.style.display='none';
+  try{const d=await api('/auth/register',{method:'POST',body:JSON.stringify({email:$('remail').value,password:$('rpw').value,name:$('rname').value,birthYear:Number($('ryear').value)||undefined,company:$('rcomp').value||undefined})});token=d.accessToken;me={name:$('rname').value};afterLogin();}
+  catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.textContent='가입하기';btn.disabled=false;
+}
+function afterLogin(){$('user-chip').style.display='flex';$('uav').textContent=(me.name||'?').charAt(0);$('unm').textContent=me.name;loadTab('all');}
+function logoutConfirm(){if(confirm(me.name+'님, 로그아웃?')){token=null;me=null;renderLogin();}}
+function renderShell(content){
+  $('screen').innerHTML=`<nav class="nav">
+    <div class="ntab${tab==='all'?' on':''}" onclick="loadTab('all')"><i class="ti ti-layout-grid"></i>전체</div>
+    <div class="ntab${tab==='professor'?' on':''}" onclick="loadTab('professor')"><i class="ti ti-school"></i>교수님</div>
+    <div class="ntab${tab==='birth_year'?' on':''}" onclick="loadTab('birth_year')"><i class="ti ti-cake"></i>년생</div>
+    <div class="ntab${tab==='flash'?' on':''}" onclick="loadTab('flash')"><i class="ti ti-bolt"></i>번개</div>
+    <div class="ntab${tab==='members'?' on':''}" onclick="loadTab('members')"><i class="ti ti-users"></i>동기</div>
+  </nav><div class="main" id="mc">${content}</div>`;
+}
+async function loadTab(t){
+  tab=t;renderShell('<div class="spin"></div>');
+  try{
+    if(t==='members'){const u=await api('/users');renderMembers(u);}
+    else if(t==='flash'){flashList=await api('/flash-meetings/nearby?lat=37.461&lng=126.952&radius=50');renderFlash(flashList);}
+    else{const m=await api('/meetings'+(t==='all'?'':'?type='+t));renderMeetings(m);}
+  }catch(e){renderShell(`<div class="empty"><i class="ti ti-wifi-off"></i><p>${e.message}</p></div>`);}
+}
+function renderMeetings(list){
+  renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">${tab==='all'?'전체 모임':typeName(tab)+' 모임'}</span><span class="cnt">${list.length}</span></div>
+    <button class="btn-add" onclick="openNewMeeting()"><i class="ti ti-plus"></i>만들기</button></div>
+    <div class="cards">${list.length?list.map(m=>`<div class="card t-${m.type}" onclick="openDetail('${m.id}')">
+      <div class="card-row"><div class="card-ttl">${m.title}</div>
+      <div class="badges"><span class="bdg ${m.type}">${typeName(m.type)}</span><span class="bdg ${m.status}">${statusName(m.status)}</span></div></div>
+      ${m.description?`<div class="card-desc">${m.description}</div>`:''}
+      <div class="card-meta">
+        ${m.organizer?`<span class="mi"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
+        ${m.scheduledAt?`<span class="mi"><i class="ti ti-calendar"></i>${fmtDate(m.scheduledAt)}</span>`:''}
+        ${m.location?`<span class="mi"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
+        ${m.targetBirthYear?`<span class="mi"><i class="ti ti-cake"></i>${m.targetBirthYear}년생</span>`:''}
+      </div></div>`).join(''):'<div class="empty"><i class="ti ti-calendar-off"></i><p>모임이 없습니다</p></div>'}
+    </div>`);
+}
+async function openDetail(id){
+  showModal('<div class="spin"></div>');
+  try{
+    const m=await api('/meetings/'+id);
+    let vr=null;if(m.status==='voting'||m.status==='confirmed'){try{vr=await api('/votes/'+id+'/results');}catch(_){}}
+    const pct=vr?Math.round(vr.agreeRate):0;
+    showModal(`<div class="modal-hdr"><div class="modal-ttl">${typeName(m.type)} 모임</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+      <div class="det-bar" style="background:${typeColor(m.type)}"></div>
+      ${m.status==='confirmed'?`<div class="confirm-ok"><i class="ti ti-circle-check"></i><span>모임이 확정되었습니다!</span></div>`:''}
+      <div class="det-ttl">${m.title}</div>
+      ${m.description?`<div class="det-desc">${m.description}</div>`:''}
+      <div class="chips">
+        ${m.organizer?`<span class="chip"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
+        ${m.scheduledAt?`<span class="chip"><i class="ti ti-calendar"></i>${fmtDate(m.scheduledAt)}</span>`:''}
+        ${m.location?`<span class="chip"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
+        ${m.targetBirthYear?`<span class="chip"><i class="ti ti-cake"></i>${m.targetBirthYear}년생</span>`:''}
+        ${m.voteDeadline?`<span class="chip"><i class="ti ti-clock"></i>투표마감 ${fmtDate(m.voteDeadline)}</span>`:''}
+      </div>
+      ${m.status==='voting'?`<div class="vote-box">
+        <div class="vote-box-ttl"><i class="ti ti-chart-bar"></i>투표 현황 (${vr?vr.total:0}명)</div>
+        <div class="vote-btns">
+          <button class="vbtn agree" onclick="castVote('${id}','agree',this)"><i class="ti ti-thumb-up"></i>찬성</button>
+          <button class="vbtn disagree" onclick="castVote('${id}','disagree',this)"><i class="ti ti-thumb-down"></i>반대</button>
+          <button class="vbtn abstain" onclick="castVote('${id}','abstain',this)"><i class="ti ti-minus"></i>기권</button>
+        </div>
+        <div class="big-bar"><div class="big-bar-fill" style="width:${pct}%"></div></div>
+        <div class="vote-stat"><span>찬성 ${vr?vr.agree:0}명</span><span style="font-weight:700;color:${pct>=50?'#065f46':'#999'}">${pct}%</span><span>반대 ${vr?vr.disagree:0}명</span></div>
+        <div style="margin-top:8px;font-size:11px;color:#999;text-align:center">과반수(${m.quorumPercent||50}%) 달성 시 자동 확정</div>
+      </div>`:''}
+      <div class="btn-row">
+        <button class="btn-cancel" onclick="closeModal()">닫기</button>
+        ${m.status==='draft'&&m.organizerId===me?.id?`<button class="btn-submit" onclick="startVoting('${id}')">투표 시작</button>`:''}
+        ${m.status==='voting'&&m.organizerId===me?.id?`<button class="btn-submit" style="background:#065f46" onclick="confirmMeeting('${id}')">수동 확정</button>`:''}
+      </div>`);
+  }catch(e){toast('오류: '+e.message);closeModal();}
+}
+async function castVote(mid,choice,btn){btn.disabled=true;btn.classList.add('sel');try{await api('/votes/'+mid,{method:'POST',body:JSON.stringify({choice})});toast({agree:'찬성!',disagree:'반대',abstain:'기권'}[choice]);closeModal();loadTab(tab);}catch(e){toast(e.message);btn.disabled=false;btn.classList.remove('sel');}}
+async function startVoting(mid){try{await api('/meetings/'+mid+'/start-voting',{method:'PATCH'});toast('투표 시작!');closeModal();loadTab(tab);}catch(e){toast(e.message);}}
+async function confirmMeeting(mid){try{await api('/meetings/'+mid+'/confirm',{method:'PATCH'});toast('확정!');closeModal();loadTab(tab);}catch(e){toast(e.message);}}
+function renderFlash(list){
+  renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">번개 모임</span><span class="cnt">${list.length}</span></div>
+    <button class="btn-add" onclick="openNewFlash()"><i class="ti ti-bolt"></i>번개 열기</button></div>
+    <div class="cards">${list.length?list.map(f=>`<div class="card t-flash" onclick="openFlashDetail('${f.id}')">
+      <div class="card-row"><div class="card-ttl">${f.title}</div><span class="bdg flash">번개</span></div>
+      ${f.description?`<div class="card-desc">${f.description}</div>`:''}
+      <div class="card-meta"><span class="mi"><i class="ti ti-map-pin"></i>${f.locationName}</span><span class="mi"><i class="ti ti-users"></i>${f.currentParticipants}/${f.maxParticipants}명</span></div>
+      <div class="flash-exp"><i class="ti ti-clock"></i>${fmtDiff(f.expiresAt)}</div>
+    </div>`).join(''):'<div class="empty"><i class="ti ti-bolt-off"></i><p>번개 모임이 없습니다</p></div>'}
+    </div>`);
+}
+function openFlashDetail(id){
+  const f=flashList.find(x=>x.id===id);if(!f)return;
+  showModal(`<div class="modal-hdr"><div class="modal-ttl">번개 모임</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="det-bar" style="background:#e05c2a"></div>
+    <div class="det-ttl">${f.title}</div>${f.description?`<div class="det-desc">${f.description}</div>`:''}
+    <div class="chips"><span class="chip"><i class="ti ti-map-pin"></i>${f.locationName}</span>
+    <span class="chip"><i class="ti ti-users"></i>${f.currentParticipants}/${f.maxParticipants}명</span>
+    <span class="chip" style="color:#b84a1e"><i class="ti ti-clock"></i>${fmtDiff(f.expiresAt)}</span></div>
+    <div class="btn-row"><button class="btn-cancel" onclick="closeModal()">닫기</button>
+    <button class="btn-submit" ${f.currentParticipants>=f.maxParticipants?'disabled':''} onclick="joinFlash('${f.id}')">⚡ 참여하기</button></div>`);
+}
+async function joinFlash(id){try{await api('/flash-meetings/'+id+'/join',{method:'POST'});toast('참여 완료! ⚡');closeModal();loadTab('flash');}catch(e){toast(e.message);}}
+function renderMembers(users){
+  renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">동기 명단</span><span class="cnt">${users.length}명</span></div></div>
+    <div class="ul">${users.map(u=>`<div class="uc">
+      <div class="uav">${(u.name||'?').charAt(0)}</div>
+      <div class="uinf"><div class="unm">${u.name}</div><div class="usub">${[u.company,u.position].filter(Boolean).join(' · ')||u.email}</div></div>
+      ${u.birthYear?`<span class="yr-bdg">${u.birthYear}년생</span>`:''}
+    </div>`).join('')}</div>`);
+}
+function openNewMeeting(){
+  showModal(`<div class="modal-hdr"><div class="modal-ttl">새 모임 만들기</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="fld"><label>유형</label><select id="nm-type"><option value="professor">교수님 모임 (투표)</option><option value="birth_year">년생 모임</option><option value="general">일반 모임</option></select></div>
+    <div class="fld"><label>제목</label><input type="text" id="nm-title" placeholder="모임 제목"></div>
+    <div class="fld"><label>설명</label><textarea id="nm-desc" placeholder="선택"></textarea></div>
+    <div class="r2"><div class="fld"><label>장소</label><input type="text" id="nm-loc"></div>
+    <div class="fld"><label>년생 대상</label><input type="number" id="nm-year" placeholder="1985"></div></div>
+    <div class="r2"><div class="fld"><label>모임 일시</label><input type="datetime-local" id="nm-date"></div>
+    <div class="fld"><label>과반수 (%)</label><input type="number" id="nm-quorum" value="50"></div></div>
+    <div class="btn-row"><button class="btn-cancel" onclick="closeModal()">취소</button>
+    <button class="btn-submit" id="nm-btn" onclick="submitMeeting()">만들기</button></div>`);
+}
+async function submitMeeting(){
+  const title=$('nm-title').value.trim();if(!title){toast('제목 입력');return;}
+  const btn=$('nm-btn');btn.disabled=true;btn.textContent='생성 중...';
+  try{await api('/meetings',{method:'POST',body:JSON.stringify({type:$('nm-type').value,title,description:$('nm-desc').value||undefined,location:$('nm-loc').value||undefined,targetBirthYear:Number($('nm-year').value)||undefined,scheduledAt:$('nm-date').value?new Date($('nm-date').value).toISOString():undefined,quorumPercent:Number($('nm-quorum').value)||50})});toast('모임 생성!');closeModal();loadTab(tab);}
+  catch(e){toast('오류: '+e.message);btn.disabled=false;btn.textContent='만들기';}
+}
+function openNewFlash(){
+  const exp=new Date(Date.now()+3600000).toISOString().slice(0,16);
+  showModal(`<div class="modal-hdr"><div class="modal-ttl">번개 모임 열기 ⚡</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    <div class="fld"><label>제목</label><input type="text" id="fl-ttl" placeholder="지금 커피?"></div>
+    <div class="fld"><label>장소명</label><input type="text" id="fl-loc" placeholder="관악 스타벅스"></div>
+    <div class="r2"><div class="fld"><label>최대 인원</label><input type="number" id="fl-max" value="4"></div>
+    <div class="fld"><label>반경 (km)</label><input type="number" id="fl-rad" value="3"></div></div>
+    <div class="fld"><label>종료 시간</label><input type="datetime-local" id="fl-exp" value="${exp}"></div>
+    <div class="btn-row"><button class="btn-cancel" onclick="closeModal()">취소</button>
+    <button class="btn-submit" id="fl-btn" onclick="submitFlash()">번개 열기</button></div>`);
+}
+async function submitFlash(){
+  const title=$('fl-ttl').value.trim(),loc=$('fl-loc').value.trim();if(!title||!loc){toast('제목/장소 입력');return;}
+  const btn=$('fl-btn');btn.disabled=true;btn.textContent='생성 중...';
+  try{await api('/flash-meetings',{method:'POST',body:JSON.stringify({title,locationName:loc,latitude:37.461,longitude:126.952,maxParticipants:Number($('fl-max').value)||4,radiusKm:Number($('fl-rad').value)||3,expiresAt:new Date($('fl-exp').value).toISOString()})});toast('번개 개설!');closeModal();loadTab('flash');}
+  catch(e){toast('오류: '+e.message);btn.disabled=false;btn.textContent='번개 열기';}
+}
+renderLogin();
+</script>
+</body>
+</html>
