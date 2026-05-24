@@ -203,6 +203,7 @@ function logoutConfirm(){if(confirm(me.name+'님, 로그아웃?')){token=null;me
 function renderShell(content){
   $('screen').innerHTML=`<nav class="nav">
     <div class="ntab${tab==='all'?' on':''}" onclick="loadTab('all')"><i class="ti ti-layout-grid"></i>전체</div>
+    <div class="ntab${tab==='calendar'?' on':''}" onclick="loadTab('calendar')"><i class="ti ti-calendar-month"></i>캘린더</div>
     <div class="ntab${tab==='professor'?' on':''}" onclick="loadTab('professor')"><i class="ti ti-school"></i>교수님</div>
     <div class="ntab${tab==='birth_year'?' on':''}" onclick="loadTab('birth_year')"><i class="ti ti-cake"></i>년생</div>
     <div class="ntab${tab==='flash'?' on':''}" onclick="loadTab('flash')"><i class="ti ti-bolt"></i>번개</div>
