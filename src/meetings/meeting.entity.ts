@@ -9,6 +9,7 @@ export enum MeetingType {
   BIRTH_YEAR = 'birth_year', // 년생 모임
   FLASH = 'flash',           // 번개 모임
   GENERAL = 'general',       // 일반 모임
+  SEMINAR = 'seminar',       // 세미나|수다(무알콜)
 }
 
 export enum MeetingStatus {

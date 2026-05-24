@@ -18,6 +18,7 @@ var MeetingType;
     MeetingType["BIRTH_YEAR"] = "birth_year";
     MeetingType["FLASH"] = "flash";
     MeetingType["GENERAL"] = "general";
+MeetingType["SEMINAR"] = "seminar";
 })(MeetingType || (exports.MeetingType = MeetingType = {}));
 var MeetingStatus;
 (function (MeetingStatus) {
