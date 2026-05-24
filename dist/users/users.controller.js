@@ -41,8 +41,8 @@ let UsersController = class UsersController {
     updateProfile(user, dto) {
         return this.usersService.updateProfile(user.id, dto);
     }
-    async removeUser(reqUser, id) {
-        if (reqUser.role !== 'admin') {
+    async removeUser(user, id) {
+        if (!user || user.role !== 'admin') {
             throw new Error('관리자만 삭제 가능합니다');
         }
         return this.usersService.remove(id);
