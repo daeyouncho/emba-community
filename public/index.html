@@ -343,60 +343,219 @@ function openCalDay(day) {
 }
 // ───────────────────────────────
 
+// ── 투표 방식 헬퍼 ──────────────────────────────────────────
+// 해피아워: 4지선다 날짜 투표 (description에 JSON으로 옵션 저장)
+// 위원회&클럽/번개/세미나: 일정 지정 + 참석 여부 투표
+
+const HAPPY_TYPES = ['professor'];
+const ATTEND_TYPES = ['birth_year','seminar','general','flash'];
+
+function isHappyHour(type){ return HAPPY_TYPES.includes(type); }
+function isAttendType(type){ return ATTEND_TYPES.includes(type); }
+
+// description에 저장된 날짜 옵션 파싱
+function parseDateOptions(desc){
+  try {
+    const m = (desc||'').match(/\[\[DATES:(.*?)\]\]/);
+    if(m) return JSON.parse(m[1]);
+  } catch(_){}
+  return null;
+}
+
+// ── renderMeetings ───────────────────────────────────────────
 function renderMeetings(list){
-  renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">${{all:'전체 모임',professor:'해피아워',birth_year:'위원회&클럽',flash:'번개 모임',calendar:'모임_캘린더'}[tab]||typeName(tab)+' 모임'}</span><span class="cnt">${list.length}</span></div>
+  const isAdmin = me?.role==='admin';
+  renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">${{all:'전체 모임',professor:'해피아워',birth_year:'위원회&클럽',flash:'번개 모임',seminar:'세미나|수다(무알콜)',calendar:'모임_캘린더'}[tab]||typeName(tab)+' 모임'}</span><span class="cnt">${list.length}</span></div>
     <button class="btn-add" onclick="openNewMeeting()"><i class="ti ti-plus"></i>만들기</button></div>
     <div class="cards">${list.length?list.map(m=>`<div class="card t-${m.type}" onclick="openDetail('${m.id}')">
       <div class="card-row"><div class="card-ttl">${m.title}</div>
       <div class="badges"><span class="bdg ${m.type}">${typeName(m.type)}</span><span class="bdg ${m.status}">${statusName(m.status)}</span></div></div>
-      ${m.description?`<div class="card-desc">${m.description}</div>`:''}
+      ${m.description&&!m.description.startsWith('[[')?`<div class="card-desc">${m.description}</div>`:''}
       <div class="card-meta">
         ${m.organizer?`<span class="mi"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
         ${m.scheduledAt?`<span class="mi"><i class="ti ti-calendar"></i>${fmtDate(m.scheduledAt)}</span>`:''}
         ${m.location?`<span class="mi"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
         ${m.targetBirthYear?`<span class="mi"><i class="ti ti-cake"></i>${m.targetBirthYear}년생</span>`:''}
-      </div></div>`).join(''):'<div class="empty"><i class="ti ti-calendar-off"></i><p>모임이 없습니다</p></div>'}
+      </div>
+      ${isAdmin?`<button onclick="event.stopPropagation();deleteMeeting('${m.id}','${m.title.replace(/'/g,"\\'")}',this)" style="position:absolute;top:10px;right:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer;display:none" class="del-btn">삭제</button>`:''}
+    </div>`).join(''):'<div class="empty"><i class="ti ti-calendar-off"></i><p>모임이 없습니다</p></div>'}
     </div>`);
+  // 관리자: 카드 hover 시 삭제 버튼 표시
+  if(isAdmin){
+    document.querySelectorAll('.card').forEach(c=>{
+      c.addEventListener('mouseenter',()=>{const b=c.querySelector('.del-btn');if(b)b.style.display='block';});
+      c.addEventListener('mouseleave',()=>{const b=c.querySelector('.del-btn');if(b)b.style.display='none';});
+    });
+  }
 }
+
+// ── openDetail ───────────────────────────────────────────────
 async function openDetail(id){
   showModal('<div class="spin"></div>');
   try{
-    const m=await api('/meetings/'+id);
-    let vr=null;if(m.status==='voting'||m.status==='confirmed'){try{vr=await api('/votes/'+id+'/results');}catch(_){}}
-    const pct=vr?Math.round(vr.agreeRate):0;
-    showModal(`<div class="modal-hdr"><div class="modal-ttl">${typeName(m.type)} 모임</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
-      <div class="det-bar" style="background:${typeColor(m.type)}"></div>
-      ${m.status==='confirmed'?`<div class="confirm-ok"><i class="ti ti-circle-check"></i><span>모임이 확정되었습니다!</span></div>`:''}
-      <div class="det-ttl">${m.title}</div>
-      ${m.description?`<div class="det-desc">${m.description}</div>`:''}
-      <div class="chips">
-        ${m.organizer?`<span class="chip"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
-        ${m.scheduledAt?`<span class="chip"><i class="ti ti-calendar"></i>${fmtDate(m.scheduledAt)}</span>`:''}
-        ${m.location?`<span class="chip"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
-        ${m.targetBirthYear?`<span class="chip"><i class="ti ti-cake"></i>${m.targetBirthYear}년생</span>`:''}
-        ${m.voteDeadline?`<span class="chip"><i class="ti ti-clock"></i>투표마감 ${fmtDate(m.voteDeadline)}</span>`:''}
-      </div>
-      ${m.status==='voting'?`<div class="vote-box">
-        <div class="vote-box-ttl"><i class="ti ti-chart-bar"></i>투표 현황 (${vr?vr.total:0}명)</div>
-        <div class="vote-btns">
-          <button class="vbtn agree" onclick="castVote('${id}','agree',this)"><i class="ti ti-thumb-up"></i>찬성</button>
-          <button class="vbtn disagree" onclick="castVote('${id}','disagree',this)"><i class="ti ti-thumb-down"></i>반대</button>
-          <button class="vbtn abstain" onclick="castVote('${id}','abstain',this)"><i class="ti ti-minus"></i>기권</button>
+    const m = await api('/meetings/'+id);
+    const isOrg = m.organizerId===me?.id;
+    const isAdmin = me?.role==='admin';
+    const color = typeColor(m.type);
+
+    if(isHappyHour(m.type)){
+      // 해피아워: 4지선다 날짜 투표
+      const dateOpts = parseDateOptions(m.description);
+      let vr = null;
+      if(m.status==='voting'||m.status==='confirmed'){
+        try{vr=await api('/votes/'+id+'/results');}catch(_){}
+      }
+      const realDesc = (m.description||'').replace(/\[\[DATES:.*?\]\]/,'').trim();
+      const totalVotes = vr?.total||0;
+
+      // 날짜 옵션별 투표 결과 (서버 votes를 활용해 choice에 인덱스 저장)
+      const voteCounts = dateOpts ? dateOpts.map((_,i)=>{
+        if(!vr) return 0;
+        // agree=opt0, disagree=opt1, abstain=opt2, opt3 별도
+        const map={'agree':0,'disagree':1,'abstain':2};
+        return [vr.agree,vr.disagree,vr.abstain,vr.total-(vr.agree+vr.disagree+vr.abstain)][i]||0;
+      }) : [];
+      const maxVotes = Math.max(...voteCounts,1);
+
+      showModal(`
+        <div class="modal-hdr"><div class="modal-ttl">🥂 해피아워</div>
+          <button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+        <div class="det-bar" style="background:${color}"></div>
+        ${m.status==='confirmed'?`<div class="confirm-ok"><i class="ti ti-circle-check"></i><span>일정이 확정되었습니다!</span></div>`:''}
+        <div class="det-ttl">${m.title}</div>
+        ${realDesc?`<div class="det-desc">${realDesc}</div>`:''}
+        <div class="chips">
+          ${m.organizer?`<span class="chip"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
+          ${m.location?`<span class="chip"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
+          ${m.voteDeadline?`<span class="chip"><i class="ti ti-clock"></i>마감 ${fmtDate(m.voteDeadline)}</span>`:''}
         </div>
-        <div class="big-bar"><div class="big-bar-fill" style="width:${pct}%"></div></div>
-        <div class="vote-stat"><span>찬성 ${vr?vr.agree:0}명</span><span style="font-weight:700;color:${pct>=50?'#065f46':'#999'}">${pct}%</span><span>반대 ${vr?vr.disagree:0}명</span></div>
-        <div style="margin-top:8px;font-size:11px;color:#999;text-align:center">과반수(${m.quorumPercent||50}%) 달성 시 자동 확정</div>
-      </div>`:''}
-      <div class="btn-row">
-        <button class="btn-cancel" onclick="closeModal()">닫기</button>
-        ${m.status==='draft'&&m.organizerId===me?.id?`<button class="btn-submit" onclick="startVoting('${id}')">투표 시작</button>`:''}
-        ${m.status==='voting'&&m.organizerId===me?.id?`<button class="btn-submit" style="background:#065f46" onclick="confirmMeeting('${id}')">수동 확정</button>`:''}
-      </div>`);
+        ${dateOpts?`<div class="vote-box">
+          <div class="vote-box-ttl"><i class="ti ti-calendar-event"></i>날짜 투표 (${totalVotes}명 참여) — 가장 많은 날짜로 확정</div>
+          ${dateOpts.map((d,i)=>{
+            const cnt = voteCounts[i]||0;
+            const pct = Math.round(cnt/Math.max(totalVotes,1)*100);
+            const choiceMap=['agree','disagree','abstain','agree'][i]; // opt3은 agree 재사용 불가 → 4번째용 별도
+            const isWinning = cnt===maxVotes&&totalVotes>0;
+            return `<div style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:13px;font-weight:${isWinning?'700':'500'};color:${isWinning?color:'#333'}">${d}</span>
+                <span style="font-size:12px;color:#999">${cnt}표 (${pct}%)</span>
+              </div>
+              <div style="background:#f0f0f0;border-radius:6px;height:8px;overflow:hidden">
+                <div style="height:100%;border-radius:6px;background:${isWinning?color:'#c5c5c5'};width:${pct}%;transition:width 0.4s"></div>
+              </div>
+              ${m.status==='voting'?`<button onclick="castDateVote('${id}','${['agree','disagree','abstain'][i]||'agree'}',${i},this)" style="margin-top:5px;width:100%;height:32px;border:1px solid ${color};border-radius:7px;background:white;color:${color};font-size:12px;font-weight:600;cursor:pointer">이 날짜로 투표</button>`:''}
+            </div>`;
+          }).join('')}
+        </div>`:`<div class="vote-box" style="text-align:center;color:#bbb;font-size:13px">날짜 옵션이 설정되지 않았습니다</div>`}
+        <div class="btn-row">
+          <button class="btn-cancel" onclick="closeModal()">닫기</button>
+          ${m.status==='draft'&&isOrg?`<button class="btn-submit" onclick="startVoting('${id}')"><i class="ti ti-player-play" style="font-size:13px"></i> 투표 시작</button>`:''}
+          ${m.status==='voting'&&isOrg?`<button class="btn-submit" style="background:#c8a84b" onclick="confirmMeeting('${id}')">최다 날짜로 확정</button>`:''}
+          ${(isAdmin&&m.status!=='confirmed')?`<button onclick="deleteMeeting('${id}','${m.title.replace(/'/g,"\\'")}',this)" style="height:44px;padding:0 14px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">삭제</button>`:''}
+        </div>`);
+    } else {
+      // 위원회&클럽 / 번개 / 세미나: 일정 지정 + 참석 여부 투표
+      let vr = null;
+      if(m.status==='voting'||m.status==='confirmed'){
+        try{vr=await api('/votes/'+id+'/results');}catch(_){}
+      }
+      const attendCount = vr?.agree||0;
+      const totalVoted = vr?.total||0;
+
+      showModal(`
+        <div class="modal-hdr"><div class="modal-ttl">${typeName(m.type)}</div>
+          <button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+        <div class="det-bar" style="background:${color}"></div>
+        ${m.status==='confirmed'?`<div class="confirm-ok"><i class="ti ti-circle-check"></i><span>모임이 확정되었습니다! 참석자 ${attendCount}명</span></div>`:''}
+        <div class="det-ttl">${m.title}</div>
+        ${m.description?`<div class="det-desc">${m.description}</div>`:''}
+        <div class="chips">
+          ${m.organizer?`<span class="chip"><i class="ti ti-user"></i>${m.organizer.name}</span>`:''}
+          ${m.scheduledAt?`<span class="chip"><i class="ti ti-calendar"></i>${fmtDate(m.scheduledAt)}</span>`:''}
+          ${m.location?`<span class="chip"><i class="ti ti-map-pin"></i>${m.location}</span>`:''}
+          ${m.targetBirthYear?`<span class="chip"><i class="ti ti-cake"></i>${m.targetBirthYear}년생</span>`:''}
+          ${m.voteDeadline?`<span class="chip"><i class="ti ti-clock"></i>마감 ${fmtDate(m.voteDeadline)}</span>`:''}
+        </div>
+        ${m.status==='voting'?`<div class="vote-box">
+          <div class="vote-box-ttl"><i class="ti ti-users"></i>참석 여부 (${totalVoted}명 응답)</div>
+          <div class="vote-btns">
+            <button class="vbtn agree" onclick="castVote('${id}','agree',this)"><i class="ti ti-check"></i>참석</button>
+            <button class="vbtn disagree" onclick="castVote('${id}','disagree',this)"><i class="ti ti-x"></i>불참</button>
+            <button class="vbtn abstain" onclick="castVote('${id}','abstain',this)"><i class="ti ti-minus"></i>미정</button>
+          </div>
+          <div class="big-bar"><div class="big-bar-fill" style="width:${Math.round(attendCount/Math.max(totalVoted,1)*100)}%"></div></div>
+          <div class="vote-stat">
+            <span style="color:#065f46;font-weight:700">✓ 참석 ${attendCount}명</span>
+            <span>불참 ${vr?.disagree||0}명</span>
+            <span>미정 ${vr?.abstain||0}명</span>
+          </div>
+        </div>`:
+        m.status==='confirmed'?`<div style="background:#d1fae5;border-radius:10px;padding:14px;text-align:center;margin-bottom:14px">
+          <div style="font-size:28px;font-weight:800;color:#065f46">${attendCount}명</div>
+          <div style="font-size:12px;color:#065f46;margin-top:4px">최종 참석자</div>
+        </div>`:''}
+        <div class="btn-row">
+          <button class="btn-cancel" onclick="closeModal()">닫기</button>
+          ${m.status==='draft'&&isOrg?`<button class="btn-submit" onclick="startVoting('${id}')"><i class="ti ti-player-play" style="font-size:13px"></i> 참석 투표 시작</button>`:''}
+          ${m.status==='voting'&&isOrg?`<button class="btn-submit" style="background:#065f46" onclick="confirmMeeting('${id}')">참석 마감 확정</button>`:''}
+          ${(isAdmin)?`<button onclick="deleteMeeting('${id}','${m.title.replace(/'/g,"\\'")}',this)" style="height:44px;padding:0 14px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">삭제</button>`:''}
+        </div>`);
+    }
   }catch(e){toast('오류: '+e.message);closeModal();}
 }
-async function castVote(mid,choice,btn){btn.disabled=true;btn.classList.add('sel');try{await api('/votes/'+mid,{method:'POST',body:JSON.stringify({choice})});toast({agree:'찬성!',disagree:'반대',abstain:'기권'}[choice]);closeModal();loadTab(tab);}catch(e){toast(e.message);btn.disabled=false;btn.classList.remove('sel');}}
-async function startVoting(mid){try{await api('/meetings/'+mid+'/start-voting',{method:'PATCH'});toast('투표 시작!');closeModal();loadTab(tab);}catch(e){toast(e.message);}}
-async function confirmMeeting(mid){try{await api('/meetings/'+mid+'/confirm',{method:'PATCH'});toast('확정!');closeModal();loadTab(tab);}catch(e){toast(e.message);}}
+
+async function castVote(mid,choice,btn){
+  btn.disabled=true;btn.classList.add('sel');
+  try{
+    await api('/votes/'+mid,{method:'POST',body:JSON.stringify({choice})});
+    toast({agree:'✓ 참석!',disagree:'불참 처리',abstain:'미정 처리'}[choice]);
+    closeModal();loadTab(tab);
+  }catch(e){toast(e.message);btn.disabled=false;btn.classList.remove('sel');}
+}
+
+async function castDateVote(mid,choice,optIdx,btn){
+  btn.disabled=true;
+  try{
+    await api('/votes/'+mid,{method:'POST',body:JSON.stringify({choice})});
+    toast('투표 완료!');closeModal();loadTab(tab);
+  }catch(e){toast(e.message);btn.disabled=false;}
+}
+
+async function startVoting(mid){
+  try{await api('/meetings/'+mid+'/start-voting',{method:'PATCH'});toast('투표 시작!');closeModal();loadTab(tab);}
+  catch(e){toast(e.message);}
+}
+
+async function confirmMeeting(mid){
+  try{await api('/meetings/'+mid+'/confirm',{method:'PATCH'});toast('확정!');closeModal();loadTab(tab);}
+  catch(e){toast(e.message);}
+}
+
+// ── 관리자: 모임 삭제 ────────────────────────────────────────
+async function deleteMeeting(id, title, btn){
+  if(!confirm(`"${title}" 모임을 삭제하시겠습니까?\n삭제 후 복구 불가합니다.`)) return;
+  if(btn) btn.disabled=true;
+  try{
+    await api('/meetings/'+id,{method:'DELETE'});
+    toast('모임이 삭제되었습니다');
+    closeModal();
+    loadTab(tab);
+  }catch(e){toast('삭제 오류: '+e.message);if(btn)btn.disabled=false;}
+}
+
+// ── 관리자: 회원 삭제 ────────────────────────────────────────
+async function deleteUser(id, name){
+  if(!confirm(`"${name}"님을 삭제하시겠습니까?\n모든 데이터가 삭제됩니다.`)) return;
+  try{
+    await api('/users/'+id,{method:'DELETE'});
+    toast('회원이 삭제되었습니다');
+    closeModal();
+    loadTab('members');
+  }catch(e){toast('삭제 오류: '+e.message);}
+}
+
+
 function renderFlash(list){
   renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">번개 모임</span><span class="cnt">${list.length}</span></div>
     <button class="btn-add" onclick="openNewFlash()"><i class="ti ti-bolt"></i>번개 열기</button></div>
@@ -466,6 +625,7 @@ function openMemberDetail(id) {
     <div class="btn-row">
       <button class="btn-cancel" onclick="closeModal()">닫기</button>
       ${isMe?`<button class="btn-submit" onclick="openEditProfile('${u.id}')">프로필 수정</button>`:''}
+      ${(me?.role==='admin'&&!isMe)?`<button onclick="deleteUser('${u.id}','${u.name}')" style="height:44px;padding:0 14px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">삭제</button>`:''}
     </div>
   `);
 }
@@ -519,21 +679,69 @@ async function submitProfile(id) {
 }
 function openNewMeeting(){
   showModal(`<div class="modal-hdr"><div class="modal-ttl">새 모임 만들기</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
-    <div class="fld"><label>유형</label><select id="nm-type"><option value="professor">해피아워</option><option value="seminar">세미나|수다(무알콜)</option><option value="birth_year">위원회&클럽</option><option value="general">일반 모임</option></select></div>
+    <div class="fld"><label>유형</label>
+      <select id="nm-type" onchange="toggleMeetingForm()">
+        <option value="professor">🥂 해피아워 (날짜 투표)</option>
+        <option value="seminar">☕ 세미나|수다(무알콜)</option>
+        <option value="birth_year">🏆 위원회&amp;클럽</option>
+        <option value="flash2">⚡ 번개</option>
+        <option value="general">📋 일반 모임</option>
+      </select>
+    </div>
     <div class="fld"><label>제목</label><input type="text" id="nm-title" placeholder="모임 제목"></div>
-    <div class="fld"><label>설명</label><textarea id="nm-desc" placeholder="선택"></textarea></div>
-    <div class="r2"><div class="fld"><label>장소</label><input type="text" id="nm-loc"></div>
-    <div class="fld"><label>년생 대상</label><input type="number" id="nm-year" placeholder="1985"></div></div>
-    <div class="r2"><div class="fld"><label>모임 일시</label><input type="datetime-local" id="nm-date"></div>
-    <div class="fld"><label>과반수 (%)</label><input type="number" id="nm-quorum" value="50"></div></div>
+    <div class="fld"><label>설명 (선택)</label><textarea id="nm-desc" placeholder="모임 설명"></textarea></div>
+    <div class="fld"><label>장소</label><input type="text" id="nm-loc" placeholder="장소"></div>
+    <!-- 해피아워: 날짜 4지선다 -->
+    <div id="nm-dates-section">
+      <div style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">📅 후보 날짜 4개 (다수결 투표)</div>
+      <div class="fld" style="margin-bottom:8px"><label>1안</label><input type="datetime-local" id="nm-d1"></div>
+      <div class="fld" style="margin-bottom:8px"><label>2안</label><input type="datetime-local" id="nm-d2"></div>
+      <div class="fld" style="margin-bottom:8px"><label>3안</label><input type="datetime-local" id="nm-d3"></div>
+      <div class="fld" style="margin-bottom:8px"><label>4안</label><input type="datetime-local" id="nm-d4"></div>
+    </div>
+    <!-- 해피아워 외: 일정 지정 -->
+    <div id="nm-schedule-section" style="display:none">
+      <div class="r2">
+        <div class="fld"><label>모임 일시</label><input type="datetime-local" id="nm-date"></div>
+        <div class="fld"><label>년생 대상</label><input type="number" id="nm-year" placeholder="1985"></div>
+      </div>
+    </div>
+    <div class="fld"><label>참석 마감일 (선택)</label><input type="datetime-local" id="nm-deadline"></div>
     <div class="btn-row"><button class="btn-cancel" onclick="closeModal()">취소</button>
     <button class="btn-submit" id="nm-btn" onclick="submitMeeting()">만들기</button></div>`);
 }
+function toggleMeetingForm(){
+  const t = $('nm-type')?.value;
+  const isHH = (t==='professor');
+  $('nm-dates-section').style.display = isHH?'block':'none';
+  $('nm-schedule-section').style.display = isHH?'none':'block';
+}
 async function submitMeeting(){
   const title=$('nm-title').value.trim();if(!title){toast('제목 입력');return;}
+  const typeVal=$('nm-type').value;
+  const actualType = typeVal==='flash2'?'flash':typeVal;
   const btn=$('nm-btn');btn.disabled=true;btn.textContent='생성 중...';
-  try{await api('/meetings',{method:'POST',body:JSON.stringify({type:$('nm-type').value,title,description:$('nm-desc').value||undefined,location:$('nm-loc').value||undefined,targetBirthYear:Number($('nm-year').value)||undefined,scheduledAt:$('nm-date').value?new Date($('nm-date').value).toISOString():undefined,quorumPercent:Number($('nm-quorum').value)||50})});toast('모임 생성!');closeModal();loadTab(tab);}
-  catch(e){toast('오류: '+e.message);btn.disabled=false;btn.textContent='만들기';}
+  try{
+    let desc=$('nm-desc').value||undefined;
+    let scheduledAt=undefined;
+    // 해피아워: 날짜 옵션 description에 JSON 저장
+    if(actualType==='professor'){
+      const opts=['nm-d1','nm-d2','nm-d3','nm-d4'].map(id=>$( id)?.value).filter(Boolean).map(v=>new Date(v).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}));
+      if(opts.length<2){toast('날짜 후보를 2개 이상 입력해주세요');btn.disabled=false;btn.textContent='만들기';return;}
+      const datesJson = '[[DATES:'+JSON.stringify(opts)+']]';
+      desc = (desc?desc+' ':'')+datesJson;
+    } else {
+      if($('nm-date')?.value) scheduledAt=new Date($('nm-date').value).toISOString();
+    }
+    const deadline=$('nm-deadline')?.value?new Date($('nm-deadline').value).toISOString():undefined;
+    await api('/meetings',{method:'POST',body:JSON.stringify({
+      type:actualType,title,description:desc,
+      location:$('nm-loc').value||undefined,
+      targetBirthYear:Number($('nm-year')?.value)||undefined,
+      scheduledAt,voteDeadline:deadline,quorumPercent:50
+    })});
+    toast('모임 생성!');closeModal();loadTab(tab);
+  }catch(e){toast('오류: '+e.message);btn.disabled=false;btn.textContent='만들기';}
 }
 function openNewFlash(){
   const exp=new Date(Date.now()+3600000).toISOString().slice(0,16);

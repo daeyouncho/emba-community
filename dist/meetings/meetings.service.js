@@ -81,6 +81,13 @@ let MeetingsService = class MeetingsService {
         meeting.status = meeting_entity_1.MeetingStatus.VOTING;
         return this.meetingsRepository.save(meeting);
     }
+    async remove(id) {
+        const meeting = await this.meetingsRepository.findOne({ where: { id } });
+        if (!meeting) throw new Error('모임을 찾을 수 없습니다');
+        await this.meetingsRepository.remove(meeting);
+        return { success: true };
+    }
+
 };
 exports.MeetingsService = MeetingsService;
 exports.MeetingsService = MeetingsService = __decorate([

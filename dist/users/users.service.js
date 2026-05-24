@@ -76,6 +76,12 @@ let UsersService = class UsersService {
         await this.usersRepository.update(userId, dto);
         return this.findOne(userId);
     }
+    async remove(userId) {
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (!user) throw new Error('사용자를 찾을 수 없습니다');
+        await this.usersRepository.remove(user);
+        return { success: true };
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
