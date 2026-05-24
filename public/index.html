@@ -112,6 +112,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f2041;color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:500;z-index:1000;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 .flash-exp{display:flex;align-items:center;gap:4px;font-size:11px;color:#b84a1e;font-weight:600;margin-top:6px}
+
+.cal-cell{background:#fff;min-height:64px;padding:6px 5px;cursor:pointer;transition:background 0.12s;position:relative;}
+.cal-cell:hover{background:#f5f3ff;}
+.cal-cell.empty{background:#fafafa;cursor:default;}
+.cal-cell.cal-today .cal-num{background:#0f2041;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;}
+.cal-num{font-size:12px;font-weight:600;color:#333;line-height:1;}
+.cal-cell.empty .cal-num{color:#ccc;}
 </style>
 </head>
 <body>
@@ -207,9 +214,130 @@ async function loadTab(t){
   try{
     if(t==='members'){const u=await api('/users');renderMembers(u);}
     else if(t==='flash'){flashList=await api('/flash-meetings/nearby?lat=37.461&lng=126.952&radius=50');renderFlash(flashList);}
+    else if(t==='calendar'){const m=await api('/meetings');renderCalendar(m);}
     else{const m=await api('/meetings'+(t==='all'?'':'?type='+t));renderMeetings(m);}
   }catch(e){renderShell(`<div class="empty"><i class="ti ti-wifi-off"></i><p>${e.message}</p></div>`);}
 }
+
+// ───────────────────────────────
+// 캘린더 뷰
+// ───────────────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let calMeetings = [];
+
+function renderCalendar(meetings) {
+  calMeetings = meetings;
+  renderShell(buildCalendarHTML());
+}
+
+function buildCalendarHTML() {
+  const today = new Date();
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth + 1, 0);
+  const startDow = firstDay.getDay(); // 0=일
+  const totalDays = lastDay.getDate();
+  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const dayNames = ['일','월','화','수','목','금','토'];
+
+  // 이 달의 모임 → { day: [meeting,...] }
+  const dayMap = {};
+  for (const m of calMeetings) {
+    const d = m.scheduledAt || m.voteDeadline;
+    if (!d) continue;
+    const dt = new Date(d);
+    if (dt.getFullYear()===calYear && dt.getMonth()===calMonth) {
+      const k = dt.getDate();
+      if (!dayMap[k]) dayMap[k] = [];
+      dayMap[k].push(m);
+    }
+  }
+
+  // 날짜 셀 생성
+  let cells = '';
+  // 빈 셀 (이전 달)
+  for (let i=0;i<startDow;i++) cells += `<div class="cal-cell empty"></div>`;
+  // 날짜 셀
+  for (let d=1;d<=totalDays;d++) {
+    const isToday = d===today.getDate()&&calMonth===today.getMonth()&&calYear===today.getFullYear();
+    const events = dayMap[d]||[];
+    const dotColors = {professor:'#c8a84b',birth_year:'#7c5cbf',flash:'#e05c2a',general:'#378ADD'};
+    const dots = events.slice(0,3).map(m=>`<span style="width:6px;height:6px;border-radius:50%;background:${dotColors[m.type]||'#888'};display:inline-block;flex-shrink:0"></span>`).join('');
+    const moreLabel = events.length>3?`<span style="font-size:9px;color:#999">+${events.length-3}</span>`:'';
+    cells += `<div class="cal-cell${isToday?' cal-today':''}" onclick="openCalDay(${d})">
+      <div class="cal-num">${d}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;align-items:center;min-height:12px">${dots}${moreLabel}</div>
+      ${events.length?`<div style="font-size:9px;color:#555;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${events[0].title}</div>`:''}
+    </div>`;
+  }
+  // 뒷 빈 셀
+  const trailingCells = (startDow + totalDays) % 7;
+  if (trailingCells > 0) for (let i=trailingCells;i<7;i++) cells += `<div class="cal-cell empty"></div>`;
+
+  // 이번 달 모임 리스트
+  const allThisMonth = Object.entries(dayMap).sort((a,b)=>Number(a[0])-Number(b[0]));
+  const listHTML = allThisMonth.length ? allThisMonth.map(([day,ms])=>ms.map(m=>{
+    const dotColor = {professor:'#c8a84b',birth_year:'#7c5cbf',flash:'#e05c2a',general:'#378ADD'}[m.type]||'#888';
+    return `<div onclick="openDetail('${m.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-radius:10px;border:1px solid #eee;cursor:pointer;margin-bottom:6px">
+      <div style="width:36px;height:36px;border-radius:8px;background:${dotColor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:14px;font-weight:800;color:${dotColor}">${day}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+        <div style="font-size:11px;color:#999;margin-top:2px">${{'professor':'교수님','birth_year':'년생','flash':'번개','general':'일반'}[m.type]||m.type}${m.location?' · '+m.location:''}</div>
+      </div>
+      <span style="background:${dotColor}22;color:${dotColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0">${{'draft':'준비중','voting':'투표중','confirmed':'확정'}[m.status]||m.status}</span>
+    </div>`;
+  }).join('')).join('') : '<div style="text-align:center;padding:24px;color:#bbb;font-size:13px">이번 달 예정된 모임이 없습니다</div>';
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button onclick="calNav(-1)" style="background:none;border:1px solid #ddd;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#333">‹</button>
+      <div style="font-size:18px;font-weight:800">${calYear}년 ${monthNames[calMonth]}</div>
+      <button onclick="calNav(1)" style="background:none;border:1px solid #ddd;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#333">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#f0f0f0;border-radius:10px 10px 0 0;overflow:hidden;margin-bottom:1px">
+      ${dayNames.map((d,i)=>`<div style="background:#f9f8f6;padding:8px 0;text-align:center;font-size:11px;font-weight:700;color:${i===0?'#e05c2a':i===6?'#378ADD':'#555'}">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#f0f0f0;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:20px">
+      ${cells}
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">이번 달 모임 <span style="font-size:12px;color:#999;font-weight:400">(${Object.values(dayMap).flat().length}개)</span></div>
+      ${listHTML}
+    </div>
+    <button class="btn-add" style="width:100%;justify-content:center" onclick="openNewMeeting()"><i class="ti ti-plus"></i>새 모임 만들기</button>`;
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  const mc = document.getElementById('mc');
+  if (mc) mc.innerHTML = buildCalendarHTML();
+}
+
+function openCalDay(day) {
+  const events = calMeetings.filter(m=>{
+    const d = m.scheduledAt||m.voteDeadline;
+    if(!d) return false;
+    const dt = new Date(d);
+    return dt.getFullYear()===calYear&&dt.getMonth()===calMonth&&dt.getDate()===day;
+  });
+  if (!events.length) return;
+  if (events.length === 1) { openDetail(events[0].id); return; }
+  const dotColor = {professor:'#c8a84b',birth_year:'#7c5cbf',flash:'#e05c2a',general:'#378ADD'};
+  showModal(`
+    <div class="modal-hdr"><div class="modal-ttl">${calMonth+1}월 ${day}일 모임</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+    ${events.map(m=>`<div onclick="closeModal();openDetail('${m.id}')" style="display:flex;align-items:center;gap:10px;padding:12px;background:#f9f8f6;border-radius:10px;cursor:pointer;margin-bottom:8px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${dotColor[m.type]||'#888'};flex-shrink:0"></div>
+      <div><div style="font-size:14px;font-weight:700">${m.title}</div>
+      <div style="font-size:12px;color:#999;margin-top:2px">${m.location||''}</div></div>
+    </div>`).join('')}
+    <button class="btn-cancel" style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);
+}
+// ───────────────────────────────
+
 function renderMeetings(list){
   renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">${tab==='all'?'전체 모임':typeName(tab)+' 모임'}</span><span class="cnt">${list.length}</span></div>
     <button class="btn-add" onclick="openNewMeeting()"><i class="ti ti-plus"></i>만들기</button></div>
