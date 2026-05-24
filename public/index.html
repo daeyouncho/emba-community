@@ -287,13 +287,102 @@ function openFlashDetail(id){
     <button class="btn-submit" ${f.currentParticipants>=f.maxParticipants?'disabled':''} onclick="joinFlash('${f.id}')">⚡ 참여하기</button></div>`);
 }
 async function joinFlash(id){try{await api('/flash-meetings/'+id+'/join',{method:'POST'});toast('참여 완료! ⚡');closeModal();loadTab('flash');}catch(e){toast(e.message);}}
+let memberList = [];
 function renderMembers(users){
+  memberList = users;
   renderShell(`<div class="sec-hdr"><div><span class="sec-ttl">동기 명단</span><span class="cnt">${users.length}명</span></div></div>
-    <div class="ul">${users.map(u=>`<div class="uc">
+    <div class="ul">${users.map(u=>`<div class="uc" onclick="openMemberDetail('${u.id}')">
       <div class="uav">${(u.name||'?').charAt(0)}</div>
-      <div class="uinf"><div class="unm">${u.name}</div><div class="usub">${[u.company,u.position].filter(Boolean).join(' · ')||u.email}</div></div>
+      <div class="uinf">
+        <div class="unm">${u.name} ${u.role==='admin'?'<span style="font-size:10px;color:#c8a84b;font-weight:600">관리자</span>':''}</div>
+        <div class="usub">${[u.company,u.position].filter(Boolean).join(' · ')||u.email}</div>
+        ${u.bio?`<div style="font-size:11px;color:#666;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${u.bio}</div>`:''}
+        ${u.interests&&u.interests.length?`<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">${u.interests.slice(0,3).map(t=>`<span style="background:#f0ebff;color:#5a3b9c;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px">#${t}</span>`).join('')}</div>`:''}
+      </div>
       ${u.birthYear?`<span class="yr-bdg">${u.birthYear}년생</span>`:''}
     </div>`).join('')}</div>`);
+}
+
+function openMemberDetail(id) {
+  const u = memberList.find(x=>x.id===id);
+  if (!u) return;
+  const isMe = me && me.id === id;
+  showModal(`
+    <div class="modal-hdr">
+      <div class="modal-ttl">${isMe?'내 프로필':'동기 프로필'}</div>
+      <button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="width:64px;height:64px;border-radius:50%;background:#0f2041;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#c8a84b;margin:0 auto 10px">${(u.name||'?').charAt(0)}</div>
+      <div style="font-size:20px;font-weight:800">${u.name}</div>
+      ${u.birthYear?`<div style="font-size:12px;color:#999;margin-top:3px">${u.birthYear}년생</div>`:''}
+    </div>
+    <div class="chips" style="justify-content:center;margin-bottom:16px">
+      ${u.company?`<span class="chip"><i class="ti ti-building"></i>${u.company}</span>`:''}
+      ${u.position?`<span class="chip"><i class="ti ti-briefcase"></i>${u.position}</span>`:''}
+      ${u.email?`<span class="chip"><i class="ti ti-mail"></i>${u.email}</span>`:''}
+    </div>
+    ${u.bio?`<div style="background:#f9f8f6;border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">자기소개</div>
+      <div style="font-size:13px;color:#333;line-height:1.7">${u.bio.replace(/\n/g,'<br>')}</div>
+    </div>`:'<div style="background:#f9f8f6;border-radius:10px;padding:14px 16px;margin-bottom:14px;text-align:center;color:#bbb;font-size:13px">자기소개가 없습니다</div>'}
+    ${u.interests&&u.interests.filter(Boolean).length?`<div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">관심사</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${u.interests.filter(Boolean).map(t=>`<span style="background:#f0ebff;color:#5a3b9c;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px">#${t}</span>`).join('')}</div>
+    </div>`:''}
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal()">닫기</button>
+      ${isMe?`<button class="btn-submit" onclick="openEditProfile('${u.id}')">프로필 수정</button>`:''}
+    </div>
+  `);
+}
+
+function openEditProfile(id) {
+  const u = memberList.find(x=>x.id===id)||{};
+  const interestStr = (u.interests||[]).filter(Boolean).join(', ');
+  showModal(`
+    <div class="modal-hdr"><div class="modal-ttl">프로필 수정</div><button class="modal-cls" onclick="openMemberDetail('${id}')"><i class="ti ti-x"></i></button></div>
+    <div class="fld"><label>이름</label><input type="text" id="ep-name" value="${u.name||''}"></div>
+    <div class="r2">
+      <div class="fld"><label>회사</label><input type="text" id="ep-company" value="${u.company||''}"></div>
+      <div class="fld"><label>직책/직급</label><input type="text" id="ep-position" value="${u.position||''}"></div>
+    </div>
+    <div class="fld"><label>년생</label><input type="number" id="ep-year" value="${u.birthYear||''}" placeholder="예: 1985"></div>
+    <div class="fld"><label>자기소개 / 하는 일</label>
+      <textarea id="ep-bio" style="min-height:100px" placeholder="현재 하시는 일, 전문 분야, 커리어 스토리 등을 자유롭게 작성해주세요">${u.bio||''}</textarea>
+    </div>
+    <div class="fld"><label>관심사 <span style="font-weight:400;color:#999">(쉼표로 구분, 예: AI, 투자, 골프)</span></label>
+      <input type="text" id="ep-interests" value="${interestStr}" placeholder="관심사를 쉼표로 구분해서 입력">
+    </div>
+    <div style="font-size:11px;color:#999;margin:-8px 0 12px;padding:0 2px">예) AI, 핀테크, 골프, 부동산투자, 스타트업</div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="openMemberDetail('${id}')">취소</button>
+      <button class="btn-submit" id="ep-btn" onclick="submitProfile('${id}')">저장</button>
+    </div>
+  `);
+}
+
+async function submitProfile(id) {
+  const btn=$('ep-btn');btn.disabled=true;btn.textContent='저장 중...';
+  const rawInterests = $('ep-interests').value;
+  const interests = rawInterests.split(',').map(s=>s.trim()).filter(Boolean);
+  try {
+    const updated = await api('/users/me', {method:'PATCH', body:JSON.stringify({
+      name:$('ep-name').value.trim()||undefined,
+      company:$('ep-company').value.trim()||undefined,
+      position:$('ep-position').value.trim()||undefined,
+      birthYear:Number($('ep-year').value)||undefined,
+      bio:$('ep-bio').value.trim()||undefined,
+      interests,
+    })});
+    // 로컬 memberList 업데이트
+    const idx = memberList.findIndex(x=>x.id===id);
+    if (idx>=0) memberList[idx] = {...memberList[idx], ...updated};
+    // 상단 이름도 업데이트
+    if (me && me.id===id) { me.name=updated.name; $('unm').textContent=updated.name; $('uav').textContent=(updated.name||'?').charAt(0); }
+    toast('프로필 저장 완료!');
+    openMemberDetail(id);
+  } catch(e) { toast('오류: '+e.message); btn.disabled=false; btn.textContent='저장'; }
 }
 function openNewMeeting(){
   showModal(`<div class="modal-hdr"><div class="modal-ttl">새 모임 만들기</div><button class="modal-cls" onclick="closeModal()"><i class="ti ti-x"></i></button></div>

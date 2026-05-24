@@ -38,8 +38,20 @@ let UsersController = class UsersController {
     findNearby(user, radiusKm) {
         return this.usersService.findNearbyUsers(user.latitude, user.longitude, Number(radiusKm));
     }
+    updateProfile(user, dto) {
+        return this.usersService.updateProfile(user.id, dto);
+    }
 };
 exports.UsersController = UsersController;
+__decorate([
+    (0, common_1.Patch)('me'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),

@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './user.entity';
 
 @Controller('users')
@@ -33,5 +34,10 @@ export class UsersController {
   @Get('nearby/:radiusKm')
   findNearby(@CurrentUser() user: User, @Param('radiusKm') radiusKm: string) {
     return this.usersService.findNearbyUsers(user.latitude, user.longitude, Number(radiusKm));
+  }
+
+  @Patch('me')
+  updateProfile(@CurrentUser() user: User, @Body() dto: UpdateProfileDto) {
+    return this.usersService.updateProfile(user.id, dto);
   }
 }

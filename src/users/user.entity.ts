@@ -62,6 +62,12 @@ export class User {
   @Column({ default: true })
   notificationEnabled: boolean;
 
+  @Column({ nullable: true, type: 'text' })
+  bio: string;
+
+  @Column({ nullable: true, type: 'simple-array' })
+  interests: string[];
+
   @CreateDateColumn()
   createdAt: Date;
 

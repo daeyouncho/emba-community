@@ -72,6 +72,10 @@ let UsersService = class UsersService {
     async updateKakaoId(userId, kakaoId) {
         await this.usersRepository.update(userId, { kakaoId });
     }
+    async updateProfile(userId, dto) {
+        await this.usersRepository.update(userId, dto);
+        return this.findOne(userId);
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -70,5 +71,10 @@ export class UsersService {
 
   async updateKakaoId(userId: string, kakaoId: string): Promise<void> {
     await this.usersRepository.update(userId, { kakaoId });
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<User> {
+    await this.usersRepository.update(userId, dto);
+    return this.findOne(userId);
   }
 }
