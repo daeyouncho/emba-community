@@ -87,6 +87,12 @@ let MeetingsService = class MeetingsService {
         await this.meetingsRepository.remove(meeting);
         return { success: true };
     }
+    async cancelMeeting(id) {
+        const meeting = await this.meetingsRepository.findOne({ where: { id } });
+        if (!meeting) throw new Error('모임을 찾을 수 없습니다');
+        await this.meetingsRepository.remove(meeting);
+        return { success: true, message: '삭제되었습니다' };
+    }
 
 };
 exports.MeetingsService = MeetingsService;

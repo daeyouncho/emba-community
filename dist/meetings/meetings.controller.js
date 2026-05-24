@@ -36,6 +36,10 @@ let MeetingsController = class MeetingsController {
     confirm(id, user) {
         return this.meetingsService.confirm(id, user.id);
     }
+    async cancelMeeting(user, id) {
+        if (!user || user.role !== 'admin') throw new Error('관리자만 가능');
+        return this.meetingsService.cancelMeeting(id);
+    }
     startVoting(id, user) {
         return this.meetingsService.startVoting(id, user.id);
     }
@@ -63,15 +67,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], MeetingsController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, current_user_decorator_1.CurrentUser)()),
-    __param(1, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", Promise)
-], MeetingsController.prototype, "remove", null);
+
 __decorate([
     (0, common_1.Patch)(':id/confirm'),
     __param(0, (0, common_1.Param)('id')),
@@ -80,6 +76,15 @@ __decorate([
     __metadata("design:paramtypes", [String, user_entity_1.User]),
     __metadata("design:returntype", void 0)
 ], MeetingsController.prototype, "confirm", null);
+__decorate([
+    (0, common_1.Patch)(':id/cancel'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], MeetingsController.prototype, "cancelMeeting", null);
 __decorate([
     (0, common_1.Patch)(':id/start-voting'),
     __param(0, (0, common_1.Param)('id')),

@@ -42,9 +42,7 @@ let UsersController = class UsersController {
         return this.usersService.updateProfile(user.id, dto);
     }
     async removeUser(user, id) {
-        if (!user || user.role !== 'admin') {
-            throw new Error('관리자만 삭제 가능합니다');
-        }
+        if (!user || user.role !== 'admin') throw new Error('관리자만 가능');
         return this.usersService.remove(id);
     }
 };
@@ -58,6 +56,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Patch)(':id/remove'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "removeUser", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
